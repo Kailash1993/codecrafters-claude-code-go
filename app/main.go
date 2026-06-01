@@ -49,26 +49,20 @@ func main() {
 		Name:        "Write",
 		Description: openai.String("Write content to a file"),
 		Parameters: openai.FunctionParameters{
-			"type": "function",
-			"function": {
-				"name": "Write",
-				"description": "Write content to a file",
-				"parameters": {
-				"type": "object",
-				"required": ["file_path", "content"],
-				"properties": {
-					"file_path": {
-					"type": "string",
-					"description": "The path of the file to write to"
-					},
-					"content": {
-					"type": "string",
-					"description": "The content to write to the file"
-					}
-				}
-				}
+			"type":     "object",
+			"required": []string{"file_path", "content"},
+			"properties": map[string]any{
+				"file_path": map[string]any{
+					"type":        "string",
+					"description": "The path of the file to write to",
+				},
+				"content": map[string]any{
+					"type":        "string",
+					"description": "The content to write to the file",
+				},
 			},
-		})
+		},
+	})
 
 	client := openai.NewClient(option.WithAPIKey(apiKey), option.WithBaseURL(baseUrl))
 
