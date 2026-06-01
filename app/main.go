@@ -114,8 +114,9 @@ func main() {
 						ToolCallID: toolCall.ID,
 					},
 				})
+			}
 		} else {
-			fmt.Print(resp.Choices[0].Message.Content)
+			fmt.Fprintf(os.Stdout, "%s\n", *&resp.Choices[0].Message.Content)
 			break
 		}
 
