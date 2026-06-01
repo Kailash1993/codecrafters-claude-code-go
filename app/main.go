@@ -158,6 +158,20 @@ func execute_tool(tool_call openai.ChatCompletionMessageToolCallUnion) (string, 
 		// fmt.Printf("Read file '%s' with content:\n%s\n", args.FilePath, string(content[:]))
 
 		return string(content[:]), nil
+	} else if tool_call.Function.Name == "Write" {
+		var args struct {
+			FilePath string `json:"file_path"`
+			Content  string `json:"content"`
+		}
+		if err := json.Unmarshal([]byte(tool_call.Function.Arguments), &args); err != nil {
+			return "", fmt.Errorf("invalid arguments: %v", err)
+		}
+
+		if err := os.WriteFile(args.FilePath, []byte(args.Content), 0644); err != nil {
+			return "", fmt.Errorf("error writing file '%s': %v", args.FilePath, err)
+		}
+
+		return "File written successfully", nil
 	} else {
 		return "", fmt.Errorf("unknown tool: %s", tool_call.Function.Name)
 	}
