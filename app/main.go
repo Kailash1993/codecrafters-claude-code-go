@@ -45,6 +45,31 @@ func main() {
 		},
 	})
 
+	writeToolSpecification := openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+		Name:        "Write",
+		Description: openai.String("Write content to a file"),
+		Parameters: openai.FunctionParameters{
+			"type": "function",
+			"function": {
+				"name": "Write",
+				"description": "Write content to a file",
+				"parameters": {
+				"type": "object",
+				"required": ["file_path", "content"],
+				"properties": {
+					"file_path": {
+					"type": "string",
+					"description": "The path of the file to write to"
+					},
+					"content": {
+					"type": "string",
+					"description": "The content to write to the file"
+					}
+				}
+				}
+			},
+		})
+
 	client := openai.NewClient(option.WithAPIKey(apiKey), option.WithBaseURL(baseUrl))
 
 	messages := []openai.ChatCompletionMessageParamUnion{
@@ -77,7 +102,7 @@ func main() {
 			openai.ChatCompletionNewParams{
 				Model:    "anthropic/claude-haiku-4.5",
 				Messages: messages,
-				Tools:    []openai.ChatCompletionToolUnionParam{readToolSpecification},
+				Tools:    []openai.ChatCompletionToolUnionParam{readToolSpecification, writeToolSpecification},
 			},
 		)
 		if err != nil {
