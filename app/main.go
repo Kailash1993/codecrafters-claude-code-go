@@ -112,7 +112,7 @@ func main() {
 			openai.ChatCompletionNewParams{
 				Model:    "anthropic/claude-haiku-4.5",
 				Messages: messages,
-				Tools:    []openai.ChatCompletionToolUnionParam{readToolSpecification, writeToolSpecification},
+				Tools:    []openai.ChatCompletionToolUnionParam{readToolSpecification, writeToolSpecification, bashToolSpecification},
 			},
 		)
 		if err != nil {
