@@ -96,6 +96,7 @@ func main() {
 
 				fmt.Printf("Reading file at path: %s\n", args.FilePath)
 				content, err := os.ReadFile(args.FilePath)
+				fmt.Printf("File content read successfully, length: %d bytes\n", len(content))
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "error reading file '%s': %v\n", args.FilePath, err)
 					os.Exit(1)
