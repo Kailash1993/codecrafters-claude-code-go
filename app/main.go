@@ -88,13 +88,7 @@ func main() {
 			panic("No choices in response")
 		}
 
-		messages = append(messages, openai.ChatCompletionMessageParamUnion{
-			OfAssistant: &openai.ChatCompletionAssistantMessageParam{
-				Content: openai.ChatCompletionAssistantMessageParamContentUnion{
-					OfString: openai.String(resp.Choices[0].Message.Content),
-				},
-			},
-		})
+		messages = append(messages, resp.Choices[0].Message.ToParam())
 
 		toolCalls := resp.Choices[0].Message.ToolCalls
 		if len(toolCalls) > 0 {
