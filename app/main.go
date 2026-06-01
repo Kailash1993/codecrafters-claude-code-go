@@ -58,6 +58,21 @@ func main() {
 	// break until for loop to process tool calls
 	for {
 		client := openai.NewClient(option.WithAPIKey(apiKey), option.WithBaseURL(baseUrl))
+
+		fmt.Println("Sending messages to LLM:")
+		for i, msg := range messages {
+			fmt.Printf("Message %d:\n", i)
+			if msg.OfUser != nil {
+				fmt.Fprintf(os.Stdout, "  Role: user\n  Content: %s\n", *&msg.OfUser.Content)
+			}
+			if msg.OfAssistant != nil {
+				fmt.Fprintf(os.Stdout, "  Role: assistant\n  Content: %s\n", *&msg.OfAssistant.Content)
+			}
+			if msg.OfTool != nil {
+				fmt.Fprintf(os.Stdout, "  Role: tool\n  ToolCallID: %s\n  Content: %s\n", msg.OfTool.ToolCallID, *&msg.OfTool.Content)
+			}
+		}
+
 		resp, err := client.Chat.Completions.New(context.Background(),
 			openai.ChatCompletionNewParams{
 				Model:    "anthropic/claude-haiku-4.5",
@@ -99,7 +114,6 @@ func main() {
 						ToolCallID: toolCall.ID,
 					},
 				})
-			}
 		} else {
 			fmt.Print(resp.Choices[0].Message.Content)
 			break
