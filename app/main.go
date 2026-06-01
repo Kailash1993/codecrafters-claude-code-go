@@ -109,6 +109,10 @@ func main() {
 }
 
 func execute_tool(tool_call openai.ChatCompletionMessageToolCallUnion) (string, error) {
+	fmt.Println("Executing tool call:")
+	fmt.Printf("  Name: %s\n", tool_call.Function.Name)
+	fmt.Printf("  Arguments: %v\n", tool_call.Function.Arguments)
+
 	if tool_call.Function.Name == "Read" {
 		var args struct {
 			FilePath string `json:"file_path"`
