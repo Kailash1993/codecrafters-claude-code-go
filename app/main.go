@@ -97,7 +97,7 @@ func main() {
 					os.Exit(1)
 				}
 
-				fmt.Printf(string(content))
+				fmt.Printf(string(content[:]))
 			}
 		}
 	}
