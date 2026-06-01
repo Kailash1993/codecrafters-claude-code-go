@@ -86,7 +86,7 @@ func main() {
 
 			if toolCall.Function.Name == "Read" {
 				var args struct {
-					FilePath string `json:"filePath"`
+					FilePath string `json:"file_path"`
 				}
 				if err := json.Unmarshal([]byte(toolCall.Function.Arguments), &args); err != nil {
 					log.Fatal("invalid arguments:", err)
@@ -97,7 +97,8 @@ func main() {
 					os.Exit(1)
 				}
 
-				fmt.Printf(string(content[:]))
+				str1 := string(content[:])
+				fmt.Print(str1)
 			}
 		}
 	}
