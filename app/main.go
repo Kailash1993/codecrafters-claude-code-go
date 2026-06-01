@@ -59,19 +59,19 @@ func main() {
 
 	// break until for loop to process tool calls
 	for {
-		fmt.Println("Sending messages to LLM:")
-		for i, msg := range messages {
-			fmt.Printf("Message %d:\n", i)
-			if msg.OfUser != nil {
-				fmt.Fprintf(os.Stdout, "  Role: user\n  Content: %s\n", *&msg.OfUser.Content)
-			}
-			if msg.OfAssistant != nil {
-				fmt.Fprintf(os.Stdout, "  Role: assistant\n  Content: %s\n", *&msg.OfAssistant.Content)
-			}
-			if msg.OfTool != nil {
-				fmt.Fprintf(os.Stdout, "  Role: tool\n  ToolCallID: %s\n  Content: %s\n", msg.OfTool.ToolCallID, *&msg.OfTool.Content)
-			}
-		}
+		// fmt.Println("Sending messages to LLM:")
+		// for i, msg := range messages {
+		// 	fmt.Printf("Message %d:\n", i)
+		// 	if msg.OfUser != nil {
+		// 		fmt.Fprintf(os.Stdout, "  Role: user\n  Content: %s\n", *&msg.OfUser.Content)
+		// 	}
+		// 	if msg.OfAssistant != nil {
+		// 		fmt.Fprintf(os.Stdout, "  Role: assistant\n  Content: %s\n", *&msg.OfAssistant.Content)
+		// 	}
+		// 	if msg.OfTool != nil {
+		// 		fmt.Fprintf(os.Stdout, "  Role: tool\n  ToolCallID: %s\n  Content: %s\n", msg.OfTool.ToolCallID, *&msg.OfTool.Content)
+		// 	}
+		// }
 
 		resp, err := client.Chat.Completions.New(context.Background(),
 			openai.ChatCompletionNewParams{
@@ -110,18 +110,18 @@ func main() {
 				})
 			}
 		} else {
-			fmt.Fprintf(os.Stdout, "%s\n", *&resp.Choices[0].Message.Content)
+			fmt.Print(resp.Choices[0].Message.Content)
 			break
 		}
 
-		fmt.Println("----------------------------")
+		// fmt.Println("----------------------------")
 	}
 }
 
 func execute_tool(tool_call openai.ChatCompletionMessageToolCallUnion) (string, error) {
-	fmt.Println("Executing tool call:")
-	fmt.Printf("  Name: %s\n", tool_call.Function.Name)
-	fmt.Printf("  Arguments: %v\n", tool_call.Function.Arguments)
+	// fmt.Println("Executing tool call:")
+	// fmt.Printf("  Name: %s\n", tool_call.Function.Name)
+	// fmt.Printf("  Arguments: %v\n", tool_call.Function.Arguments)
 
 	if tool_call.Function.Name == "Read" {
 		var args struct {
@@ -136,28 +136,10 @@ func execute_tool(tool_call openai.ChatCompletionMessageToolCallUnion) (string, 
 			return "", fmt.Errorf("error reading file '%s': %v", args.FilePath, err)
 		}
 
-		fmt.Printf("Read file '%s' with content:\n%s\n", args.FilePath, string(content[:]))
+		// fmt.Printf("Read file '%s' with content:\n%s\n", args.FilePath, string(content[:]))
 
 		return string(content[:]), nil
 	} else {
 		return "", fmt.Errorf("unknown tool: %s", tool_call.Function.Name)
 	}
 }
-
-// messages = [{ role: "user", content: prompt }]
-
-// loop:
-//     response = call_api(messages)
-//     append response message to messages
-
-//     if response has no tool_calls:
-//         print response.content
-//         exit
-
-//     for each tool_call in response.tool_calls:
-//         result = execute_tool(tool_call)
-//         append {
-//             role: "tool",
-//             tool_call_id: tool_call.id,
-//             content: result
-//         } to messages
