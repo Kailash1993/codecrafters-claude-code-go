@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/openai/openai-go/v3"
@@ -46,67 +45,103 @@ func main() {
 		},
 	})
 
-	client := openai.NewClient(option.WithAPIKey(apiKey), option.WithBaseURL(baseUrl))
-	resp, err := client.Chat.Completions.New(context.Background(),
-		openai.ChatCompletionNewParams{
-			Model: "anthropic/claude-haiku-4.5",
-			Messages: []openai.ChatCompletionMessageParamUnion{
-				{
-					OfUser: &openai.ChatCompletionUserMessageParam{
-						Content: openai.ChatCompletionUserMessageParamContentUnion{
-							OfString: openai.String(prompt),
-						},
-					},
+	messages := []openai.ChatCompletionMessageParamUnion{
+		{
+			OfUser: &openai.ChatCompletionUserMessageParam{
+				Content: openai.ChatCompletionUserMessageParamContentUnion{
+					OfString: openai.String(prompt),
 				},
 			},
-			Tools: []openai.ChatCompletionToolUnionParam{readToolSpecification},
 		},
-	)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
-	}
-	if len(resp.Choices) == 0 {
-		panic("No choices in response")
 	}
 
-	// You can use print statements as follows for debugging, they'll be visible when running tests.
-	fmt.Fprintln(os.Stderr, "Logs from your program will appear here!")
+	// break until for loop to process tool calls
+	for {
+		client := openai.NewClient(option.WithAPIKey(apiKey), option.WithBaseURL(baseUrl))
+		resp, err := client.Chat.Completions.New(context.Background(),
+			openai.ChatCompletionNewParams{
+				Model:    "anthropic/claude-haiku-4.5",
+				Messages: messages,
+				Tools:    []openai.ChatCompletionToolUnionParam{readToolSpecification},
+			},
+		)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			os.Exit(1)
+		}
+		if len(resp.Choices) == 0 {
+			panic("No choices in response")
+		}
 
-	// TODO: Uncomment the line below to pass the first stage
-	fmt.Print(resp.Choices[0].Message.Content)
+		messages = append(messages, openai.ChatCompletionMessageParamUnion{
+			OfAssistant: &openai.ChatCompletionAssistantMessageParam{
+				Content: openai.ChatCompletionAssistantMessageParamContentUnion{
+					OfString: openai.String(resp.Choices[0].Message.Content),
+				},
+			},
+		})
 
-	toolCalls := resp.Choices[0].Message.ToolCalls
-	if len(toolCalls) > 0 {
-		for i := 0; i < len(toolCalls); i++ {
-			toolCall := toolCalls[i]
-			// fmt.Printf("Tool call %d:\n", i)
-			// fmt.Printf("  Name: %s\n", toolCall.Function.Name)
-			// fmt.Printf("  Arguments: %v\n", toolCall.Function.Arguments)
-
-			if toolCall.Function.Name == "Read" {
-				// fmt.Println("Processing Read tool call...")
-
-				var args struct {
-					FilePath string `json:"file_path"`
-				}
-				if err := json.Unmarshal([]byte(toolCall.Function.Arguments), &args); err != nil {
-					log.Fatal("invalid arguments:", err)
-				}
-
-				// fmt.Printf("Reading file at path: %s\n", args.FilePath)
-				content, err := os.ReadFile(args.FilePath)
-				// fmt.Printf("File content read successfully, length: %d bytes\n", len(content))
+		toolCalls := resp.Choices[0].Message.ToolCalls
+		if len(toolCalls) > 0 {
+			for i := range toolCalls {
+				toolCall := toolCalls[i]
+				execResult, err := execute_tool(toolCall)
 				if err != nil {
-					// fmt.Fprintf(os.Stderr, "error reading file '%s': %v\n", args.FilePath, err)
+					fmt.Fprintf(os.Stderr, "error executing tool: %v\n", err)
 					os.Exit(1)
 				}
 
-				str1 := string(content[:])
-				fmt.Print(str1)
+				messages = append(messages, openai.ChatCompletionMessageParamUnion{
+					OfTool: &openai.ChatCompletionToolMessageParam{
+						Content: openai.ChatCompletionToolMessageParamContentUnion{
+							OfString: openai.String(execResult),
+						},
+						ToolCallID: toolCall.ID,
+					},
+				})
+
 			}
+		} else {
+			fmt.Print(resp.Choices[0].Message.Content)
+			break
 		}
 	}
-
-	// fmt.Println("No tool calls in response")
 }
+
+func execute_tool(tool_call openai.ChatCompletionMessageToolCallUnion) (string, error) {
+	if tool_call.Function.Name == "Read" {
+		var args struct {
+			FilePath string `json:"file_path"`
+		}
+		if err := json.Unmarshal([]byte(tool_call.Function.Arguments), &args); err != nil {
+			return "", fmt.Errorf("invalid arguments: %v", err)
+		}
+
+		content, err := os.ReadFile(args.FilePath)
+		if err != nil {
+			return "", fmt.Errorf("error reading file '%s': %v", args.FilePath, err)
+		}
+
+		return string(content[:]), nil
+	} else {
+		return "", fmt.Errorf("unknown tool: %s", tool_call.Function.Name)
+	}
+}
+
+// messages = [{ role: "user", content: prompt }]
+
+// loop:
+//     response = call_api(messages)
+//     append response message to messages
+
+//     if response has no tool_calls:
+//         print response.content
+//         exit
+
+//     for each tool_call in response.tool_calls:
+//         result = execute_tool(tool_call)
+//         append {
+//             role: "tool",
+//             tool_call_id: tool_call.id,
+//             content: result
+//         } to messages
