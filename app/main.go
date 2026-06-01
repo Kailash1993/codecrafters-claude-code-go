@@ -45,6 +45,8 @@ func main() {
 		},
 	})
 
+	client := openai.NewClient(option.WithAPIKey(apiKey), option.WithBaseURL(baseUrl))
+
 	messages := []openai.ChatCompletionMessageParamUnion{
 		{
 			OfUser: &openai.ChatCompletionUserMessageParam{
@@ -57,8 +59,6 @@ func main() {
 
 	// break until for loop to process tool calls
 	for {
-		client := openai.NewClient(option.WithAPIKey(apiKey), option.WithBaseURL(baseUrl))
-
 		fmt.Println("Sending messages to LLM:")
 		for i, msg := range messages {
 			fmt.Printf("Message %d:\n", i)
