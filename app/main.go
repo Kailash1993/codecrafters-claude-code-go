@@ -158,7 +158,8 @@ func execute_tool(tool_call openai.ChatCompletionMessageToolCallUnion) (string, 
 	// fmt.Printf("  Name: %s\n", tool_call.Function.Name)
 	// fmt.Printf("  Arguments: %v\n", tool_call.Function.Arguments)
 
-	if tool_call.Function.Name == "Read" {
+	switch tool_call.Function.Name {
+	case "Read":
 		var args struct {
 			FilePath string `json:"file_path"`
 		}
@@ -171,10 +172,8 @@ func execute_tool(tool_call openai.ChatCompletionMessageToolCallUnion) (string, 
 			return "", fmt.Errorf("error reading file '%s': %v", args.FilePath, err)
 		}
 
-		// fmt.Printf("Read file '%s' with content:\n%s\n", args.FilePath, string(content[:]))
-
 		return string(content[:]), nil
-	} else if tool_call.Function.Name == "Write" {
+	case "Write":
 		var args struct {
 			FilePath string `json:"file_path"`
 			Content  string `json:"content"`
@@ -188,7 +187,7 @@ func execute_tool(tool_call openai.ChatCompletionMessageToolCallUnion) (string, 
 		}
 
 		return "File written successfully", nil
-	} else if tool_call.Function.Name == "Bash" {
+	case "Bash":
 		var args struct {
 			Command string `json:"command"`
 		}
@@ -202,7 +201,7 @@ func execute_tool(tool_call openai.ChatCompletionMessageToolCallUnion) (string, 
 			return "", fmt.Errorf("error executing command '%s': %v\nOutput: %s", args.Command, err, string(output))
 		}
 		return string(output), nil
-	} else {
+	default:
 		return "", fmt.Errorf("unknown tool: %s", tool_call.Function.Name)
 	}
 }
