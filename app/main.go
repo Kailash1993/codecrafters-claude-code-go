@@ -126,6 +126,8 @@ func execute_tool(tool_call openai.ChatCompletionMessageToolCallUnion) (string, 
 			return "", fmt.Errorf("error reading file '%s': %v", args.FilePath, err)
 		}
 
+		fmt.Printf("Read file '%s' with content:\n%s\n", args.FilePath, string(content[:]))
+
 		return string(content[:]), nil
 	} else {
 		return "", fmt.Errorf("unknown tool: %s", tool_call.Function.Name)
