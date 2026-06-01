@@ -85,12 +85,16 @@ func main() {
 			fmt.Printf("  Arguments: %v\n", toolCall.Function.Arguments)
 
 			if toolCall.Function.Name == "Read" {
+				fmt.Println("Processing Read tool call...")
+
 				var args struct {
 					FilePath string `json:"file_path"`
 				}
 				if err := json.Unmarshal([]byte(toolCall.Function.Arguments), &args); err != nil {
 					log.Fatal("invalid arguments:", err)
 				}
+
+				fmt.Printf("Reading file at path: %s\n", args.FilePath)
 				content, err := os.ReadFile(args.FilePath)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "error reading file '%s': %v\n", args.FilePath, err)
