@@ -99,12 +99,13 @@ func main() {
 						ToolCallID: toolCall.ID,
 					},
 				})
-
 			}
 		} else {
 			fmt.Print(resp.Choices[0].Message.Content)
 			break
 		}
+
+		fmt.Println("----------------------------")
 	}
 }
 
