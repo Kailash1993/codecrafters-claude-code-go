@@ -80,9 +80,9 @@ func main() {
 	if len(toolCalls) > 0 {
 		for i := 0; i < len(toolCalls); i++ {
 			toolCall := toolCalls[i]
-			fmt.Printf("Tool call %d:\n", i)
-			fmt.Printf("  Name: %s\n", toolCall.Function.Name)
-			fmt.Printf("  Arguments: %v\n", toolCall.Function.Arguments)
+			// fmt.Printf("Tool call %d:\n", i)
+			// fmt.Printf("  Name: %s\n", toolCall.Function.Name)
+			// fmt.Printf("  Arguments: %v\n", toolCall.Function.Arguments)
 
 			if toolCall.Function.Name == "Read" {
 				fmt.Println("Processing Read tool call...")
@@ -94,11 +94,11 @@ func main() {
 					log.Fatal("invalid arguments:", err)
 				}
 
-				fmt.Printf("Reading file at path: %s\n", args.FilePath)
+				// fmt.Printf("Reading file at path: %s\n", args.FilePath)
 				content, err := os.ReadFile(args.FilePath)
 				fmt.Printf("File content read successfully, length: %d bytes\n", len(content))
 				if err != nil {
-					fmt.Fprintf(os.Stderr, "error reading file '%s': %v\n", args.FilePath, err)
+					// fmt.Fprintf(os.Stderr, "error reading file '%s': %v\n", args.FilePath, err)
 					os.Exit(1)
 				}
 
@@ -108,5 +108,5 @@ func main() {
 		}
 	}
 
-	fmt.Println("No tool calls in response")
+	// fmt.Println("No tool calls in response")
 }
