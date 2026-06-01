@@ -1,15 +1,11 @@
 package main
 
 import (
-	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/openai/openai-go/v3"
-	"github.com/openai/openai-go/v3/option"
 )
 
 func main() {
@@ -31,82 +27,25 @@ func main() {
 		panic("Env variable OPENROUTER_API_KEY not found")
 	}
 
-	readToolSpecification := openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
-		Name:        "Read",
-		Description: openai.String("Read and return the contents of a file"),
-		Parameters: openai.FunctionParameters{
-			"type": "object",
-			"properties": map[string]any{
-				"file_path": map[string]any{
-					"type":        "string",
-					"description": "The path to the file to read",
-				},
-			},
-			"required": []string{"file_path"},
-		},
-	})
+	client := NewLLMClient(apiKey, baseUrl)
+	executor := Executor{Client: client}
 
-	client := openai.NewClient(option.WithAPIKey(apiKey), option.WithBaseURL(baseUrl))
-	resp, err := client.Chat.Completions.New(context.Background(),
-		openai.ChatCompletionNewParams{
-			Model: "anthropic/claude-haiku-4.5",
-			Messages: []openai.ChatCompletionMessageParamUnion{
-				{
-					OfUser: &openai.ChatCompletionUserMessageParam{
-						Content: openai.ChatCompletionUserMessageParamContentUnion{
-							OfString: openai.String(prompt),
-						},
-					},
+	resp, err := executor.Execute("anthropic/claude-haiku-4.5", []openai.ChatCompletionMessageParamUnion{
+		{
+			OfUser: &openai.ChatCompletionUserMessageParam{
+				Content: openai.ChatCompletionUserMessageParamContentUnion{
+					OfString: openai.String(prompt),
 				},
 			},
-			Tools: []openai.ChatCompletionToolUnionParam{readToolSpecification},
 		},
-	)
+	}, []openai.ChatCompletionToolUnionParam{readToolSpecification})
+
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
-	if len(resp.Choices) == 0 {
-		panic("No choices in response")
-	}
 
-	// You can use print statements as follows for debugging, they'll be visible when running tests.
 	fmt.Fprintln(os.Stderr, "Logs from your program will appear here!")
 
-	// TODO: Uncomment the line below to pass the first stage
-	fmt.Print(resp.Choices[0].Message.Content)
-
-	toolCalls := resp.Choices[0].Message.ToolCalls
-	if len(toolCalls) > 0 {
-		for i := 0; i < len(toolCalls); i++ {
-			toolCall := toolCalls[i]
-			// fmt.Printf("Tool call %d:\n", i)
-			// fmt.Printf("  Name: %s\n", toolCall.Function.Name)
-			// fmt.Printf("  Arguments: %v\n", toolCall.Function.Arguments)
-
-			if toolCall.Function.Name == "Read" {
-				// fmt.Println("Processing Read tool call...")
-
-				var args struct {
-					FilePath string `json:"file_path"`
-				}
-				if err := json.Unmarshal([]byte(toolCall.Function.Arguments), &args); err != nil {
-					log.Fatal("invalid arguments:", err)
-				}
-
-				// fmt.Printf("Reading file at path: %s\n", args.FilePath)
-				content, err := os.ReadFile(args.FilePath)
-				// fmt.Printf("File content read successfully, length: %d bytes\n", len(content))
-				if err != nil {
-					// fmt.Fprintf(os.Stderr, "error reading file '%s': %v\n", args.FilePath, err)
-					os.Exit(1)
-				}
-
-				str1 := string(content[:])
-				fmt.Print(str1)
-			}
-		}
-	}
-
-	// fmt.Println("No tool calls in response")
+	fmt.Print(resp)
 }
