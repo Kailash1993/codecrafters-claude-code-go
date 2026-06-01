@@ -85,7 +85,7 @@ func main() {
 			// fmt.Printf("  Arguments: %v\n", toolCall.Function.Arguments)
 
 			if toolCall.Function.Name == "Read" {
-				fmt.Println("Processing Read tool call...")
+				// fmt.Println("Processing Read tool call...")
 
 				var args struct {
 					FilePath string `json:"file_path"`
