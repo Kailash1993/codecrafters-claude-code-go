@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/openai/openai-go/v3"
@@ -73,4 +75,32 @@ func main() {
 
 	// TODO: Uncomment the line below to pass the first stage
 	fmt.Print(resp.Choices[0].Message.Content)
+
+	toolCalls := resp.Choices[0].Message.ToolCalls
+	if len(toolCalls) > 0 {
+		for i := 0; i < len(toolCalls); i++ {
+			toolCall := toolCalls[i]
+			fmt.Printf("Tool call %d:\n", i)
+			fmt.Printf("  Name: %s\n", toolCall.Function.Name)
+			fmt.Printf("  Arguments: %v\n", toolCall.Function.Arguments)
+
+			if toolCall.Function.Name == "Read" {
+				var args struct {
+					FilePath string `json:"filePath"`
+				}
+				if err := json.Unmarshal([]byte(toolCall.Function.Arguments), &args); err != nil {
+					log.Fatal("invalid arguments:", err)
+				}
+				content, err := os.ReadFile(args.FilePath)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "error reading file '%s': %v\n", args.FilePath, err)
+					os.Exit(1)
+				}
+
+				fmt.Printf(string(content))
+			}
+		}
+	}
+
+	fmt.Println("No tool calls in response")
 }
