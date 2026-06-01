@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/option"
@@ -59,6 +60,21 @@ func main() {
 				"content": map[string]any{
 					"type":        "string",
 					"description": "The content to write to the file",
+				},
+			},
+		},
+	})
+
+	bashToolSpecification := openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+		Name:        "Bash",
+		Description: openai.String("Execute a shell command"),
+		Parameters: openai.FunctionParameters{
+			"type":     "object",
+			"required": []string{"command"},
+			"properties": map[string]any{
+				"command": map[string]any{
+					"type":        "string",
+					"description": "The command to execute",
 				},
 			},
 		},
@@ -172,6 +188,20 @@ func execute_tool(tool_call openai.ChatCompletionMessageToolCallUnion) (string, 
 		}
 
 		return "File written successfully", nil
+	} else if tool_call.Function.Name == "Bash" {
+		var args struct {
+			Command string `json:"command"`
+		}
+		if err := json.Unmarshal([]byte(tool_call.Function.Arguments), &args); err != nil {
+			return "", fmt.Errorf("invalid arguments: %v", err)
+		}
+
+		cmd := exec.Command("bash", "-c", args.Command)
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			return "", fmt.Errorf("error executing command '%s': %v\nOutput: %s", args.Command, err, string(output))
+		}
+		return string(output), nil
 	} else {
 		return "", fmt.Errorf("unknown tool: %s", tool_call.Function.Name)
 	}
